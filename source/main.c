@@ -7,10 +7,25 @@ void	*hunger_games(void *arg)
 	philo = (t_philosopher *)arg;
 	while (1)
 	{
+		pthread_mutex_lock(&philo->arguments->simulation_mutex);
+		if (philo->arguments->simulation_running == 0)
+		{
+			pthread_mutex_unlock(&philo->arguments->simulation_mutex);
+			break;
+		}
+		pthread_mutex_unlock(&philo->arguments->simulation_mutex);
 		take_forks(philo);
 		eat(philo);
 		put_forks(philo);
 		sleep_and_think(philo);
+		check_death(philo);
+		pthread_mutex_lock(&philo->arguments->done_eating_mutex);
+		if (philo->arguments->philosophers_done_eating == philo->arguments->number_of_philosophers)
+		{
+			pthread_mutex_unlock(&philo->arguments->done_eating_mutex);
+			break;
+		}
+		pthread_mutex_unlock(&philo->arguments->done_eating_mutex);
 	}
 	return (NULL);
 }
@@ -55,6 +70,10 @@ int	init_philosophers(t_arg *arguments, t_philosopher **philosophers, pthread_mu
 		(*philosophers)[i].arguments = arguments;
 		i++;
 	}
+	arguments->philosophers_done_eating = 0;
+	pthread_mutex_init(&arguments->done_eating_mutex, NULL);
+	arguments->simulation_running = 1;
+	pthread_mutex_init(&arguments->simulation_mutex, NULL);
 	return (0);
 }
 
