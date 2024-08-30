@@ -20,7 +20,6 @@ typedef struct s_arg
 	pthread_mutex_t	simulation_mutex;
 }	t_arg;
 
-
 typedef struct s_philosopher
 {
 	int				id;
@@ -32,7 +31,7 @@ typedef struct s_philosopher
 	t_arg			*arguments;
 }	t_philosopher;
 
-int	ft_atoi(const char *str);
+int		ft_atoi(const char *str);
 void	free_all(t_philosopher *philosophers, pthread_mutex_t *forks, int number_of_philosophers);
 void	print_status(t_philosopher *philo, const char *status);
 

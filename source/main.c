@@ -11,7 +11,7 @@ void	*hunger_games(void *arg)
 		if (philo->arguments->simulation_running == 0)
 		{
 			pthread_mutex_unlock(&philo->arguments->simulation_mutex);
-			break;
+			break ;
 		}
 		pthread_mutex_unlock(&philo->arguments->simulation_mutex);
 		take_forks(philo);
@@ -23,7 +23,7 @@ void	*hunger_games(void *arg)
 		if (philo->arguments->philosophers_done_eating == philo->arguments->number_of_philosophers)
 		{
 			pthread_mutex_unlock(&philo->arguments->done_eating_mutex);
-			break;
+			break ;
 		}
 		pthread_mutex_unlock(&philo->arguments->done_eating_mutex);
 	}
