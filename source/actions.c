@@ -1,60 +1,71 @@
 #include "../include/include.h"
 
-void	check_death(t_philosopher *philo)
+void	*philosopher_routine(void *arg)
 {
-	struct timeval	tv;
-	long			timestamp;
+	t_philosopher	*philo;
 
-	gettimeofday(&tv, NULL);
-	timestamp = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-	if (timestamp - philo->last_meal_time > philo->arguments->time_to_die)
+	philo = (t_philosopher *)arg;
+	while (1)
 	{
-		pthread_mutex_lock(&philo->arguments->simulation_mutex);
-		if (philo->arguments->simulation_running)
+		printf("%ld %d is thinking\n", current_timestamp(), philo->id);
+		pthread_mutex_lock(philo->left_fork);
+		printf("%ld %d has taken a fork\n", current_timestamp(), philo->id);
+		pthread_mutex_lock(philo->right_fork);
+		printf("%ld %d has taken a fork\n", current_timestamp(), philo->id);
+		philo->last_meal = current_timestamp();
+		printf("%ld %d is eating\n", current_timestamp(), philo->id);
+		usleep(philo->data->time_to_eat * 1000);
+		philo->meals_eaten++;
+		pthread_mutex_unlock(philo->left_fork);
+		pthread_mutex_unlock(philo->right_fork);
+		printf("%ld %d is sleeping\n", current_timestamp(), philo->id);
+		usleep(philo->data->time_to_sleep * 1000);
+		if (philo->data->times_must_eat != -1 && philo->meals_eaten >= philo->data->times_must_eat)
+			break ;
+	}
+	return (NULL);
+}
+
+void	start_simulation(t_data *data)
+{
+	int	i;
+	int	finished;
+
+	i = 0;
+	while (i < data->number_of_philosophers)
+	{
+		pthread_create(&data->philosophers[i].thread, NULL, philosopher_routine, &data->philosophers[i]);
+		i++;
+	}
+	finished = 0;
+	while (1)
+	{
+		i = 0;
+		while (i < data->number_of_philosophers)
 		{
-			print_status(philo, "died");
-			philo->arguments->simulation_running = 0;
+			if (current_timestamp() - data->philosophers[i].last_meal > data->time_to_die)
+			{
+				printf("%ld %d died\n", current_timestamp(), data->philosophers[i].id);
+				return ;
+			}
+			i++;
 		}
-		pthread_mutex_unlock(&philo->arguments->simulation_mutex);
+		i = 0;
+		finished = 1;
+		if (data->times_must_eat != -1)
+		{
+			while (i < data->number_of_philosophers)
+			{
+				if (data->philosophers[i].meals_eaten < data->times_must_eat)
+				{
+					finished = 0;
+					break ;
+				}
+				i++;
+			}
+			if (finished)
+				break ;
+		}
+		usleep(100);
 	}
-}
-
-void	take_forks(t_philosopher *philo)
-{
-	pthread_mutex_lock(philo->left_fork);
-	print_status(philo, "has taken a fork");
-	pthread_mutex_lock(philo->right_fork);
-	print_status(philo, "has taken a fork");
-}
-
-void	put_forks(t_philosopher *philo)
-{
-	pthread_mutex_unlock(philo->left_fork);
-	pthread_mutex_unlock(philo->right_fork);
-}
-
-void	eat(t_philosopher *philo)
-{
-	struct timeval	tv;
-	long			timestamp;
-
-	gettimeofday(&tv, NULL);
-	timestamp = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-	print_status(philo, "is eating");
-	philo->last_meal_time = timestamp;
-	philo->meals_eaten++;
-	if (philo->meals_eaten == philo->arguments->number_of_times_each_philosopher_must_eat)
-	{
-		pthread_mutex_lock(&philo->arguments->done_eating_mutex);
-		philo->arguments->philosophers_done_eating++;
-		pthread_mutex_unlock(&philo->arguments->done_eating_mutex);
-	}
-	usleep(philo->arguments->time_to_eat * 1000);
-}
-
-void	sleep_and_think(t_philosopher *philo)
-{
-	print_status(philo, "is sleeping");
-	usleep(philo->arguments->time_to_sleep * 1000);
-	print_status(philo, "is thinking");
 }
