@@ -1,50 +1,78 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: trischma <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/10/08 12:21:28 by trischma          #+#    #+#             */
+/*   Updated: 2024/10/08 12:21:29 by trischma         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/include.h"
 
-long	current_timestamp(void)
+void	print_action(t_philo *philo, int pos, char *msg)
+{
+	long long	timestamp;
+
+	pthread_mutex_lock(&(philo->params->check_dead));
+	if (philo->params->dead)
+	{
+		pthread_mutex_unlock(&(philo->params->check_dead));
+		return ;
+	}
+	pthread_mutex_unlock(&(philo->params->check_dead));
+	timestamp = get_timestamp(philo->params);
+	pthread_mutex_lock(&(philo->params->print_mutex));
+	printf("%08lld %d %s\n", timestamp, pos + 1, msg);
+	pthread_mutex_unlock(&(philo->params->print_mutex));
+}
+
+int	is_dead(t_philo *philo)
+{
+	int	is_dead;
+
+	pthread_mutex_lock(&(philo->params->check_dead));
+	is_dead = philo->params->dead;
+	pthread_mutex_unlock(&(philo->params->check_dead));
+	return (is_dead);
+}
+
+long long	get_timestamp(t_params *params)
 {
 	struct timeval	tv;
+	long long		ts;
 
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+	ts = (tv.tv_sec - params->start_time.tv_sec) * 1000
+		+ (tv.tv_usec - params->start_time.tv_usec) / 1000;
+	return (ts);
 }
 
-int	init_data(t_data *data, int argc, char **argv)
+int	ft_atoi(const char *str)
 {
 	int	i;
+	int	sign;
+	int	result;
 
-	data->number_of_philosophers = ft_atoi(argv[1]);
-	data->time_to_die = ft_atoi(argv[2]);
-	data->time_to_eat = ft_atoi(argv[3]);
-	data->time_to_sleep = ft_atoi(argv[4]);
-	data->times_must_eat = -1;
-	if (argc == 6)
-		data->times_must_eat = ft_atoi(argv[5]);
-	data->philosophers = malloc(sizeof(t_philosopher) * data->number_of_philosophers);
-	data->forks = malloc(sizeof(pthread_mutex_t) * data->number_of_philosophers);
-	if (!data->philosophers || !data->forks)
-		return (1);
 	i = 0;
-	while (i < data->number_of_philosophers)
+	sign = 1;
+	result = 0;
+	while ((str[i] >= 9 && str[i] <= 13) || str[i] == 32)
+		i++;
+	if (str[i] == '-' || str[i] == '+')
 	{
-		pthread_mutex_init(&data->forks[i], NULL);
-		data->philosophers[i].id = i + 1;
-		data->philosophers[i].left_fork = &data->forks[i];
-		data->philosophers[i].right_fork = &data->forks[(i + 1) % data->number_of_philosophers];
-		data->philosophers[i].last_meal = current_timestamp();
-		data->philosophers[i].meals_eaten = 0;
-		data->philosophers[i].data = data;
+		if (str[i] == '-')
+			sign = -1;
 		i++;
 	}
-	return (0);
-}
-
-void	cleanup(t_data *data)
-{
-	int	i;
-
-	i = 0;
-	while (i < data->number_of_philosophers)
-		pthread_mutex_destroy(&data->forks[i++]);
-	free(data->philosophers);
-	free(data->forks);
+	while (str[i])
+	{
+		if (str[i] < '0' || str[i] > '9')
+			return (-1);
+		result = result * 10 + str[i] - '0';
+		i++;
+	}
+	return (result * sign);
 }
