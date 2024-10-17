@@ -6,7 +6,7 @@
 /*   By: trischma <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/08 12:21:17 by trischma          #+#    #+#             */
-/*   Updated: 2024/10/08 12:22:28 by trischma         ###   ########.fr       */
+/*   Updated: 2024/10/17 12:00:43 by trischma         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ int	check_args(int argc, char **argv)
 	}
 	else if (ft_atoi(argv[1]) <= 0 || ft_atoi(argv[2]) < 0
 		|| ft_atoi(argv[3]) < 0 || ft_atoi(argv[4]) < 0
-		|| (argc > 5 && ft_atoi(argv[5]) < 0))
+		|| (argc > 5 && ft_atoi(argv[5]) <= 0))
 	{
 		printf("Usage : ./philosophers nb_of_philosophers>0 time_to_die "
 			"time_to_eat time_to_sleep nb_of_times_each_philosophers_eat \n"
